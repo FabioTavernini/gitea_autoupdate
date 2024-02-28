@@ -1,12 +1,12 @@
 {
     "UseProxy": 1,
-    "ProxyUser": "proxyuser",
+    "ProxyUser": "ProxyUser",
     "ProxyServer":"http://yourproxy.your.net.com:8080",
-    "ProxyPW":"yourproxyuserPW",
-    "GiteaServerURL":"https://yourgitserver.yourdomain.com",
-    "WindowsServer":"yourgiteaServerName",
-    "WindowsUser":"yourdomain\\yourAdimnUserwithRightstoGiteaInstallPath",
+    "ProxyPW":"YourProxyUserPW",
+    "GiteaServerURL":"https://yourgiteaserver.yourdomain.com",
+    "WindowsServer":"yourGiteaServerName",
+    "WindowsUser":"yourDomain\\yourAdminUserwithRightstoGiteaInstallPath",
     "WindowsPW":"yourAdminPW",
-    "GiteaInstallPath":"\\\\yourgitserver\\c$\\gitea",
+    "GiteaInstallPath":"\\\\yourGiteaServer\\c$\\gitea",
     "GiteaWindowsServiceName":"GITEA_ServiceName"
 }

@@ -12,8 +12,11 @@ param (
     [int]$UseProxy
 )
 
+# .\update.ps1 -SettingsFilePath ".\settings.json"
+
 # Load settings from the provided settings file
 $settings = Get-Content $SettingsFilePath | ConvertFrom-Json
+#$settings = Get-Content .\settings.json | ConvertFrom-Json
 
 # Override settings with provided parameters if they are not null or empty
 if ($ProxyServer) { $settings.ProxyServer = $ProxyServer }
@@ -25,7 +28,7 @@ if ($WindowsPW) { $settings.WindowsPW = $WindowsPW }
 if ($GiteaServerURL) { $settings.GiteaServerURL = $GiteaServerURL }
 if ($GiteaInstallPath) { $settings.GiteaInstallPath = $GiteaInstallPath }
 if ($GiteaWindowsServiceName) { $settings.GiteaWindowsServiceName = $GiteaWindowsServiceName }
-if ($UseProxy -ne $null) { $settings.UseProxy = $UseProxy }
+if ($UseProxy -eq $null) { $settings.UseProxy = $UseProxy }
 
 # Convert proxy password to secure string
 $secStringPasswordProxy = ConvertTo-SecureString $settings.ProxyPW -AsPlainText -Force
@@ -57,12 +60,14 @@ catch {
     Write-Host "Failed to retrieve current version(s)"
 }
 
-if ($currentreleaseversion -gt $currentversion) {
+if ($comparison -eq $currentreleaseversion) {
 
     Write-Host -ForegroundColor red "Currently installed version ("$currentversion") older than available version ("$currentreleaseversion")"
     Write-Host -foregroundcolor green "Downloading newer version now"
 
     $downloadurl = ($currentrelease.assets | Where-Object { $_.name -eq "gitea-" + $currentreleaseversion + "-windows-4.0-amd64.exe" }).browser_download_url
+
+    $downloadurlchecksum = ($currentrelease.assets | Where-Object { $_.name -eq "gitea-" + $currentreleaseversion + "-windows-4.0-amd64.exe.sha256" }).browser_download_url
 
     try {
         New-PSDrive -Root $settings.GiteaInstallPath -Name "Gitfiles" -PSProvider FileSystem -Credential $WindowsCreds
@@ -70,12 +75,29 @@ if ($currentreleaseversion -gt $currentversion) {
 
         $ArchiveFile = "GitFiles:\versionarchive\" + $currentreleaseversion + "\gitea-" + $currentreleaseversion + "-gogit-windows-4.0-amd64.exe"
 
+
         if ($settings.UseProxy -eq 1) {
             Invoke-WebRequest -Uri $downloadurl -OutFile $ArchiveFile -Proxy $settings.ProxyServer -ProxyCredential $proxycreds 
+            Invoke-WebRequest -Uri $downloadurlchecksum -OutFile ($ArchiveFile + ".sha256") -Proxy $settings.ProxyServer -ProxyCredential $proxycreds 
         }
         else {
             Invoke-WebRequest -Uri $downloadurl -OutFile $ArchiveFile
+            Invoke-WebRequest -Uri $downloadurlchecksum -OutFile ($ArchiveFile + ".sha256")
         }
+
+        if ((Get-Content -Path ($ArchiveFile + ".sha256")).substring(0, 64) -ne ((Get-FileHash -Path $ArchiveFile).hash)) {
+            Write-Host -foregroundcolor red "SHA Checksum mismatch"
+        }
+        else {
+            Write-Host -ForegroundColor Green "SHA Checksum match"
+            $confirmation = Read-Host red "SHA Checksum mismatch, are you Sure You Want To Proceed: (y/n)"
+            if ($confirmation -eq "y") {
+                Write-Host -ForegroundColor Green "continue running script..."
+            }elseif($confirmation -eq "n"){
+                exit
+            }
+        }
+
     }
     catch {
         Write-Host -foregroundcolor red "Error downloading new version and storing in versionarchive"

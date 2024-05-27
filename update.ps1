@@ -60,7 +60,7 @@ catch {
     Write-Host "Failed to retrieve current version(s)"
 }
 
-if ($comparison -eq $currentreleaseversion) {
+if (($currentversion.Replace(".","")) -lt ($currentreleaseversion.Replace(".",""))) {
 
     Write-Host -ForegroundColor red "Currently installed version ("$currentversion") older than available version ("$currentreleaseversion")"
     Write-Host -foregroundcolor green "Downloading newer version now"
